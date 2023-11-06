@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from .models import Article
-from .forms import ArticleForm
+from .forms import ArticleForm, CommentForm
 
 # Create your views here.
 def index(request):
@@ -15,9 +15,11 @@ def index(request):
 
 def detail(request, id):
     article = Article.objects.get(id=id)
+    form = CommentForm()
 
     context = {
         'article': article,
+        'form': form,
     }
 
     return render(request, 'detail.html', context)
@@ -36,3 +38,26 @@ def create(request):
         'form':form,
     }
     return render(request, 'form.html', context)
+
+
+def comment_create(request, article_id):
+    form = CommentForm(request.POST)
+
+    if form.is_valid():
+        # form을 저장 => 추가로 넣어야 하는 데이터를 넣기 위해서 저장 멈춰 !
+        comment = form.save(commit=False)
+        
+        # 첫번째 방법
+        # article_id를 기준으로 article obj 가져오기
+        # article = Article.objects.get(id=article_id)
+        # # article 칼럼에 추가
+        # comment.article = article
+        # comment.save()
+
+        # 두 번째 방법(integer를 저장하는 방법)
+        # 위와 달리 데이터베이스를 조회하지 않아 속도가 빠르다
+        comment.article_id = article_id
+        comment.save()
+
+        return redirect('articles:detail', id=article_id)
+
